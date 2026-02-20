@@ -1,14 +1,9 @@
 # ============================================
-# Fabbrica Agentica — Ignora TUTTO il framework
+# Fabbrica Agentica — Infrastructure (ignored)
 # ============================================
 
 # Virtual Environment
 .venv/
-
-# Node
-node_modules/
-package.json
-package-lock.json
 
 # Python cache
 __pycache__/
@@ -22,14 +17,14 @@ execution/
 gemini.md
 mcp_config.json
 
-# Setup scripts
+# Setup scripts (fabbrica)
 setup.sh
 force-mcp-setup.sh
 
 # Docker (fabbrica)
 Dockerfile
 
-# Requirements (fabbrica)
+# Requirements (fabbrica - Python)
 requirements.txt
 
 # Directives (fabbrica)
@@ -38,6 +33,13 @@ directives/
 # Fabbrica source files
 src/main.py
 src/__init__.py
+
+# ============================================
+# Standard ignores
+# ============================================
+
+# Node
+node_modules/
 
 # OS
 .DS_Store
@@ -53,3 +55,6 @@ Thumbs.db
 
 # Cache
 .cache/
+
+# Vite build output
+dist/
