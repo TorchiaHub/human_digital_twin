@@ -312,6 +312,24 @@ function classifyByMaterial(scene) {
 
     scene.traverse((node) => {
         if (!node.isMesh) return
+
+        // --- OVERRIDE FOR HEART MESHES ---
+        // Heart meshes share "Trapezius" material with muscles, so we must intercept them by name
+        // to assign them correctly to the Cardiovascular system.
+        const name = node.name ? node.name.toLowerCase() : ''
+        if (
+            name.includes('heart') ||
+            name.includes('atrium') ||
+            name.includes('aorta') ||
+            name.includes('coronary') ||
+            name.includes('cardiac') ||
+            name.includes('pulmonary trunk') ||
+            (name.includes('ventricle') && !name.includes('lateral') && !name.includes('third') && !name.includes('fourth'))
+        ) {
+            map.set(node, 'cardiovascular')
+            return // Skip standard material classification
+        }
+
         const mat = node.material
         if (!mat) return
 
@@ -342,6 +360,12 @@ function findHeartNodes(scene) {
     scene.traverse((node) => {
         if (!node.name) return
         const lower = node.name.toLowerCase()
+
+        // Exclude brain ventricles (cerebrospinal fluid) from the heartbeat animation
+        if (lower.includes('ventricle') && (lower.includes('fourth') || lower.includes('third') || lower.includes('lateral'))) {
+            return
+        }
+
         for (const pattern of heartPatterns) {
             if (lower.includes(pattern)) {
                 results.push({ obj: node, baseScale: node.scale.clone() })
@@ -394,6 +418,10 @@ export default function HumanModel() {
     const setModelLoaded = useBodyStore((s) => s.setModelLoaded)
     const setSearchableParts = useBodyStore((s) => s.setSearchableParts)
     const hoveredPart = useBodyStore((s) => s.hoveredPart)
+
+    // Milestone 5: Running status
+    const isRunning = useBodyStore((s) => s.isRunning)
+    const speed = useBodyStore((s) => s.speed)
 
     // Apply anatomical colors ONCE on load
     useEffect(() => {
@@ -487,6 +515,24 @@ export default function HumanModel() {
     useFrame((state) => {
         const time = state.clock.getElapsedTime()
 
+        // --- MILESTONE 5: RUNNING BOBBING ---
+        if (modelRef.current) {
+            if (isRunning && speed > 0) {
+                // Bob frequency increases with speed
+                const runFreq = 1.8 + (speed / 15)
+                const bounce = Math.abs(Math.sin(time * runFreq * Math.PI * 2))
+
+                // Max vertical displacement depends on speed
+                const amplitude = 0.01 + (speed / 20 * 0.035)
+
+                // Base position is [0, -1, 0]
+                modelRef.current.position.y = -1 + (bounce * amplitude)
+            } else {
+                // Smoothly return to base position
+                modelRef.current.position.y = THREE.MathUtils.lerp(modelRef.current.position.y, -1, 0.1)
+            }
+        }
+
         // --- HEARTBEAT ---
         if (heartMeshes.current.length > 0) {
             const freq = heartRate / 60
@@ -534,22 +580,21 @@ export default function HumanModel() {
             // Map sine [-1, 1] to [0, 1] for inspiration/expiration
             const breathCycle = (Math.sin(time * respFreq * Math.PI * 2) + 1) / 2
 
-            // Max expansion 3% on Z (chest depth), 1.5% on X (chest width), 0% on Y
-            const expandZ = 1 + (breathCycle * 0.03)
-            const expandX = 1 + (breathCycle * 0.015)
+            // To avoid the lung "lifting" out of the ribcage, we stringerlo e dilatarlo (squeeze and dilate).
+            // We scale between 0.97 (squeezed) and 1.015 (dilated) uniformly.
+            const dilate = 0.97 + (breathCycle * 0.045)
 
-            // Calculate diaphragm pull (moves down slightly during inspiration)
-            // Lungs expand down, so Y scales slightly 
-            const expandY = 1 + (breathCycle * 0.02)
+            // Diaphragm specific pull
+            const diaphragmPull = 0.98 + (breathCycle * 0.04)
 
             respiratoryMeshes.current.forEach(({ obj, baseScale }) => {
                 // Apply subtle expansion
                 if (obj.name.toLowerCase().includes('diaphragm')) {
-                    // Diaphragm mostly scales Y (pulls down)
-                    obj.scale.set(baseScale.x, baseScale.y * expandY, baseScale.z)
+                    // Diaphragm mostly scales on its local vertical
+                    obj.scale.set(baseScale.x * diaphragmPull, baseScale.y * diaphragmPull, baseScale.z * diaphragmPull)
                 } else {
-                    // Chest/lungs expand outward
-                    obj.scale.set(baseScale.x * expandX, baseScale.y, baseScale.z * expandZ)
+                    // Lungs squeeze and dilate uniformly
+                    obj.scale.set(baseScale.x * dilate, baseScale.y * dilate, baseScale.z * dilate)
                 }
 
                 // Visual Stress Feedback for Lungs

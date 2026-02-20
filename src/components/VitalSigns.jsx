@@ -1,4 +1,5 @@
-import { Activity, Wind, Droplets, Heart } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Activity, Wind, Droplets, Heart, Footprints, Play, Square, Zap } from 'lucide-react'
 import useBodyStore from '../stores/useBodyStore'
 
 export default function VitalSigns() {
@@ -10,6 +11,13 @@ export default function VitalSigns() {
     const setSpO2 = useBodyStore((s) => s.setSpO2)
     const bp = useBodyStore((s) => s.bloodPressure)
     const setBloodPressure = useBodyStore((s) => s.setBloodPressure)
+
+    // Milestone 5: Running State
+    const isRunning = useBodyStore((s) => s.isRunning)
+    const setIsRunning = useBodyStore((s) => s.setIsRunning)
+    const stamina = useBodyStore((s) => s.stamina)
+    const distance = useBodyStore((s) => s.distance)
+    const speed = useBodyStore((s) => s.speed)
 
     // Algorithmic physiological response to heart rate
     const handleHeartRateChange = (newBpm) => {
@@ -31,6 +39,45 @@ export default function VitalSigns() {
         const newDia = Math.round(80 + (intensity * 0.15))
         setBloodPressure(newSys, newDia)
     }
+
+    // Capture handleHeartRateChange in a ref so the interval can use it without triggering re-renders
+    const hrHandlerRef = useRef(handleHeartRateChange)
+    useEffect(() => { hrHandlerRef.current = handleHeartRateChange }, [heartRate, isRunning, stamina])
+
+    // Running Engine Loop (1 second tick)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const state = useBodyStore.getState()
+
+            if (state.isRunning) {
+                // Calculate speed based on current simulated effort (BPM slider)
+                let currentSpeed = Math.max(0, (state.heartRate - 75) * 0.18)
+                if (currentSpeed < 5) currentSpeed = 5 // Minimum jogging speed
+
+                state.setSpeed(currentSpeed)
+                // Distance in km (speed km/h divided by 3600 seconds)
+                state.setDistance(state.distance + (currentSpeed / 3600))
+
+                // Deplete stamina based on effort
+                const exhaustionRate = currentSpeed * 0.08 // At 15km/h = drops 1.2% per sec
+                const newStamina = Math.max(0, state.stamina - exhaustionRate)
+                state.setStamina(newStamina)
+
+                // Exhaustion force stop
+                if (newStamina <= 0) {
+                    state.setIsRunning(false)
+                    hrHandlerRef.current(110) // Drop heart rate to a recovery state
+                }
+            } else {
+                state.setSpeed(0)
+                // Recover stamina when resting
+                if (state.stamina < 100) {
+                    state.setStamina(Math.min(100, state.stamina + 2.5)) // Recover 2.5% per sec
+                }
+            }
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [])
 
     return (
         <div className="mt-8">
@@ -118,6 +165,52 @@ export default function VitalSigns() {
                     <div className="flex justify-between text-[10px] text-slate-500 mt-2">
                         <span>60 BPM</span>
                         <span>180 BPM</span>
+                    </div>
+                </div>
+
+                {/* MILESTONE 5: Treadmill Simulator */}
+                <div className="col-span-2 bg-slate-900/40 border border-white/5 rounded-xl p-4 mt-2 mb-2">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                            <Footprints size={14} className={isRunning ? 'text-green-400 animate-bounce' : 'text-slate-500'} />
+                            Simulatore Corsa
+                        </h4>
+                        <button
+                            onClick={() => setIsRunning(!isRunning)}
+                            disabled={stamina === 0}
+                            className={`px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 transition-colors border ${isRunning
+                                    ? 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
+                                    : stamina === 0
+                                        ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'
+                                        : 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-green-500/20'
+                                }`}
+                        >
+                            {isRunning ? <><Square size={12} fill="currentColor" /> Ferma</> : <><Play size={12} fill="currentColor" /> Inizia Corsa</>}
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="bg-black/30 rounded p-2 text-center border border-white/5">
+                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Distanza</div>
+                            <div className="text-xl font-bold text-white font-mono">{distance.toFixed(3)} <span className="text-xs text-slate-400">km</span></div>
+                        </div>
+                        <div className="bg-black/30 rounded p-2 text-center border border-white/5">
+                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Velocità</div>
+                            <div className="text-xl font-bold text-white font-mono">{speed.toFixed(1)} <span className="text-xs text-slate-400">km/h</span></div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                            <span className="flex items-center gap-1 text-yellow-500"><Zap size={10} fill="currentColor" /> Stamina</span>
+                            <span className="text-slate-300">{Math.round(stamina)}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden shadow-inner border border-white/5">
+                            <div
+                                className={`h-full transition-all duration-300 ${stamina > 50 ? 'bg-green-400' : stamina > 20 ? 'bg-yellow-400' : 'bg-red-500'}`}
+                                style={{ width: `${stamina}%` }}
+                            />
+                        </div>
                     </div>
                 </div>
 

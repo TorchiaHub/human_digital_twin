@@ -57,6 +57,19 @@ const useBodyStore = create((set) => ({
     // Model loading state
     modelLoaded: false,
     setModelLoaded: (loaded) => set({ modelLoaded: loaded }),
+
+    // --- MILESTONE 5: RUNNING SIMULATOR ---
+    isRunning: false,
+    setIsRunning: (running) => set({ isRunning: running }),
+
+    stamina: 100, // 0 to 100%
+    setStamina: (val) => set({ stamina: val }),
+
+    distance: 0, // in meters
+    setDistance: (val) => set({ distance: val }),
+
+    speed: 0, // in km/h
+    setSpeed: (val) => set({ speed: val }),
 }))
 
 export default useBodyStore

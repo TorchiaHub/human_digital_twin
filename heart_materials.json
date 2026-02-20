@@ -1,0 +1,74 @@
+[
+  {
+    "node": "Circumflex artery of heart",
+    "material": "Artery"
+  },
+  {
+    "node": "Left atrium",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Inferior papillary muscle of left ventricle",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Left ventricle",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Right atrium",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Anterior papillary muscle of right ventricle",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Inferior papillary muscle of right ventricle",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Septal papillary muscle of right ventricle",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Right ventricle",
+    "material": "Trapezius"
+  },
+  {
+    "node": "Abdominal aorta",
+    "material": "Artery"
+  },
+  {
+    "node": "Ascending aorta",
+    "material": "Artery"
+  },
+  {
+    "node": "Thoracic aorta",
+    "material": "Artery"
+  },
+  {
+    "node": "Inferior vein of left ventricle",
+    "material": "Vein"
+  },
+  {
+    "node": "Inferior vein of left ventricle (//Posterior '')",
+    "material": "Vein"
+  },
+  {
+    "node": "Fourth ventricle",
+    "material": "LCR"
+  },
+  {
+    "node": "Third ventricle",
+    "material": "LCR"
+  },
+  {
+    "node": "Lateral ventricle.l",
+    "material": "LCR"
+  },
+  {
+    "node": "Lateral ventricle.r",
+    "material": "LCR"
+  }
+]
