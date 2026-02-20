@@ -24,9 +24,25 @@ const useBodyStore = create((set) => ({
             },
         })),
 
+    // Interactive state
+    hoveredPart: null,
+    setHoveredPart: (part) => set({ hoveredPart: part }),
+
+    selectedPart: null,
+    setSelectedPart: (part) => set({ selectedPart: part }),
+
     // Vital signs
     heartRate: 72,
     setHeartRate: (bpm) => set({ heartRate: bpm }),
+
+    respirationRate: 16,
+    setRespirationRate: (rpm) => set({ respirationRate: rpm }),
+
+    spO2: 98,
+    setSpO2: (val) => set({ spO2: val }),
+
+    bloodPressure: { sys: 120, dia: 80 },
+    setBloodPressure: (sys, dia) => set({ bloodPressure: { sys, dia } }),
 
     // Model loading state
     modelLoaded: false,

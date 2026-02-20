@@ -312,15 +312,43 @@ function findHeartNodes(scene) {
 }
 
 /**
+ * Extracts nodes representing the respiratory system (lungs, chest, diaphragm).
+ */
+function findRespiratoryNodes(scene) {
+    const results = []
+    const respiratoryPatterns = [
+        'lung', 'diaphragm', 'pleura', 'pectoralis', 'intercostal', 'rib'
+    ]
+
+    scene.traverse((node) => {
+        if (!node.name) return
+        const lower = node.name.toLowerCase()
+        for (const pattern of respiratoryPatterns) {
+            if (lower.includes(pattern)) {
+                // Ribs are many, we want the whole chest to expand slightly
+                results.push({ obj: node, baseScale: node.scale.clone() })
+                break
+            }
+        }
+    })
+
+    return results
+}
+
+/**
  * HumanModel — loads GLB, applies colors, classifies by material, binds toggles.
  */
 export default function HumanModel() {
     const { scene } = useGLTF('/human_body.glb')
     const modelRef = useRef()
     const heartMeshes = useRef([])
+    const respiratoryMeshes = useRef([])
     const colorsApplied = useRef(false)
+
+    // Store values
     const systems = useBodyStore((s) => s.systems)
     const heartRate = useBodyStore((s) => s.heartRate)
+    const respirationRate = useBodyStore((s) => s.respirationRate)
     const setModelLoaded = useBodyStore((s) => s.setModelLoaded)
 
     // Apply anatomical colors ONCE on load
@@ -338,9 +366,10 @@ export default function HumanModel() {
         return classifyByMaterial(scene)
     }, [scene])
 
-    // Find heart nodes + log stats
+    // Find animated nodes + log stats
     useEffect(() => {
         heartMeshes.current = findHeartNodes(scene)
+        respiratoryMeshes.current = findRespiratoryNodes(scene)
         setModelLoaded(true)
 
         const stats = {}
@@ -360,29 +389,137 @@ export default function HumanModel() {
         })
     }, [systems, nodeClassification])
 
-    // Heartbeat animation
+    // Heartbeat & Breathing animations
     useFrame((state) => {
-        if (heartMeshes.current.length === 0) return
-
         const time = state.clock.getElapsedTime()
-        const freq = heartRate / 60
-        const phase = (time * freq * Math.PI * 2) % (Math.PI * 2)
-        const norm = phase / (Math.PI * 2)
-        let pulse = 0
 
-        if (norm < 0.1) {
-            pulse = Math.sin(norm / 0.1 * Math.PI) * 0.06
-        } else if (norm < 0.15) {
-            pulse = 0
-        } else if (norm < 0.25) {
-            pulse = Math.sin((norm - 0.15) / 0.1 * Math.PI) * 0.03
+        // --- HEARTBEAT ---
+        if (heartMeshes.current.length > 0) {
+            const freq = heartRate / 60
+            const phase = (time * freq * Math.PI * 2) % (Math.PI * 2)
+            const norm = phase / (Math.PI * 2)
+            let pulse = 0
+
+            if (norm < 0.1) {
+                pulse = Math.sin(norm / 0.1 * Math.PI) * 0.06
+            } else if (norm < 0.15) {
+                pulse = 0
+            } else if (norm < 0.25) {
+                pulse = Math.sin((norm - 0.15) / 0.1 * Math.PI) * 0.03
+            }
+
+            heartMeshes.current.forEach(({ obj, baseScale }) => {
+                const s = 1 + pulse
+                obj.scale.set(baseScale.x * s, baseScale.y * s, baseScale.z * s)
+            })
         }
 
-        heartMeshes.current.forEach(({ obj, baseScale }) => {
-            const s = 1 + pulse
-            obj.scale.set(baseScale.x * s, baseScale.y * s, baseScale.z * s)
-        })
+        // --- BREATHING EXCURSION ---
+        if (respiratoryMeshes.current.length > 0) {
+            // Sine wave for smooth breathing: 1 full cycle = 1 breath
+            const respFreq = respirationRate / 60
+
+            // Map sine [-1, 1] to [0, 1] for inspiration/expiration
+            const breathCycle = (Math.sin(time * respFreq * Math.PI * 2) + 1) / 2
+
+            // Max expansion 3% on Z (chest depth), 1.5% on X (chest width), 0% on Y
+            const expandZ = 1 + (breathCycle * 0.03)
+            const expandX = 1 + (breathCycle * 0.015)
+
+            // Calculate diaphragm pull (moves down slightly during inspiration)
+            // Lungs expand down, so Y scales slightly 
+            const expandY = 1 + (breathCycle * 0.02)
+
+            respiratoryMeshes.current.forEach(({ obj, baseScale }) => {
+                // Apply subtle expansion
+                if (obj.name.toLowerCase().includes('diaphragm')) {
+                    // Diaphragm mostly scales Y (pulls down)
+                    obj.scale.set(baseScale.x, baseScale.y * expandY, baseScale.z)
+                } else {
+                    // Chest/lungs expand outward
+                    obj.scale.set(baseScale.x * expandX, baseScale.y, baseScale.z * expandZ)
+                }
+            })
+        }
     })
+
+    const setHoveredPart = useBodyStore((s) => s.setHoveredPart)
+    const setSelectedPart = useBodyStore((s) => s.setSelectedPart)
+    const hoveredPart = useBodyStore((s) => s.hoveredPart)
+    const hoveredMaterialRef = useRef(null)
+    const origEmissiveRef = useRef(null)
+
+    // Handle hover effects
+    const handlePointerOver = (e) => {
+        // Stop raycasting through the model — only get the nearest mesh
+        e.stopPropagation()
+
+        const mesh = e.object
+        if (!mesh || !mesh.material || !mesh.visible) return
+
+        // Skip non-anatomical nodes
+        if (mesh.name && mesh.name.toLowerCase().includes('text')) return
+
+        // Get system from our classification map
+        const system = nodeClassification.get(mesh)
+        if (!system) return
+
+        // Update global state
+        setHoveredPart({
+            name: mesh.name.replace(/\.[lro]$/, '').replace(/\.e[lr]$/, ''), // Clean up suffixes
+            system: system,
+            id: mesh.uuid
+        })
+
+        // Add glow effect by modifying emissive color temporarily
+        const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
+        if (mat) {
+            // Restore previous hovered material if any
+            if (hoveredMaterialRef.current && hoveredMaterialRef.current !== mat) {
+                hoveredMaterialRef.current.emissive.setHex(origEmissiveRef.current)
+            }
+
+            // Save original and set new glow
+            if (hoveredMaterialRef.current !== mat) {
+                hoveredMaterialRef.current = mat
+                origEmissiveRef.current = mat.emissive ? mat.emissive.getHex() : 0x000000
+                mat.emissive.setHex(0x333333) // Subtle white glow
+                mat.needsUpdate = true
+            }
+        }
+    }
+
+    const handlePointerOut = (e) => {
+        setHoveredPart(null)
+
+        // Reset glow
+        if (hoveredMaterialRef.current) {
+            hoveredMaterialRef.current.emissive.setHex(origEmissiveRef.current)
+            hoveredMaterialRef.current.needsUpdate = true
+            hoveredMaterialRef.current = null
+        }
+    }
+
+    const handleClick = (e) => {
+        e.stopPropagation()
+        const mesh = e.object
+        if (!mesh || !mesh.visible) return
+
+        const system = nodeClassification.get(mesh)
+        if (!system) return
+
+        // Clean up the name for display (remove .l, .r, .ol, .or, .el, .er postfixes)
+        let displayName = mesh.name
+        // Common 3D naming postfixes for left/right/origin/endpoint
+        displayName = displayName.replace(/\.([lro]|ol|or|el|er)$/, '')
+
+        setSelectedPart({
+            name: displayName,
+            originalName: mesh.name,
+            system: system,
+            id: mesh.uuid
+        })
+    }
 
     return (
         <primitive
@@ -391,6 +528,9 @@ export default function HumanModel() {
             dispose={null}
             position={[0, -1, 0]}
             scale={1}
+            onPointerOver={handlePointerOver}
+            onPointerOut={handlePointerOut}
+            onClick={handleClick}
         />
     )
 }
