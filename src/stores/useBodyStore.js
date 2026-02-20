@@ -8,8 +8,11 @@ const useBodyStore = create((set) => ({
         muscular: { label: 'Muscolare', visible: true, icon: '💪', color: '#d94f4f' },
         cardiovascular: { label: 'Cardiovascolare', visible: true, icon: '❤️', color: '#ff2d7b' },
         nervous: { label: 'Nervoso', visible: true, icon: '⚡', color: '#ffd700' },
+        respiratory: { label: 'Respiratorio', visible: true, icon: '🫁', color: '#8cd2e6' },
+        digestive: { label: 'Digerente', visible: true, icon: '🍽️', color: '#e8a946' },
+        lymphatic: { label: 'Linfatico', visible: true, icon: '🔰', color: '#7ad987' },
         connective: { label: 'Connettivo', visible: true, icon: '🔗', color: '#4fc3f7' },
-        organs: { label: 'Organi & Occhi', visible: true, icon: '👁️', color: '#8b5cf6' },
+        organs: { label: 'Altri Organi & Occhi', visible: true, icon: '👁️', color: '#8b5cf6' },
     },
 
     // Toggle a specific system

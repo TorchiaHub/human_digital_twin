@@ -6,7 +6,10 @@ const SYSTEM_KEYS = [
     'skeletal',
     'muscular',
     'cardiovascular',
+    'respiratory',
+    'digestive',
     'nervous',
+    'lymphatic',
     'connective',
     'organs',
 ]

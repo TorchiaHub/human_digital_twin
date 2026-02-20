@@ -72,9 +72,28 @@ const MATERIAL_TO_SYSTEM = {
     'Articular capsule': 'connective', 'Fascia': 'connective',
     'Bursa': 'connective', 'Fat': 'connective',
 
-    // ===== ORGANS =====
+    // ===== RESPIRATORY =====
+    'Lung-1': 'respiratory', 'Lung-2': 'respiratory', 'Lung-3': 'respiratory',
+    'Lung-4': 'respiratory', 'Lung-5': 'respiratory', 'Lung-6': 'respiratory',
+    'Lung-7': 'respiratory', 'Lung-8': 'respiratory', 'Lung-9': 'respiratory',
+    'Lung-base': 'respiratory', 'Diaphragm': 'respiratory',
+    'Bronchi': 'respiratory', 'Bronchi-1': 'respiratory', 'Bronchi-2': 'respiratory',
+    'Bronchi-3': 'respiratory', 'Bronchi-4': 'respiratory', 'Bronchi-5': 'respiratory',
+    'Bronchi-6': 'respiratory', 'Bronchi-7': 'respiratory', 'Bronchi-8': 'respiratory',
+
+    // ===== DIGESTIVE =====
+    'Intestine': 'digestive', 'Mucosa of stomach': 'digestive', 'Gallbladder': 'digestive',
+
+    // ===== LYMPHATIC =====
+    'Lymph-1': 'lymphatic', 'Lymph-2': 'lymphatic', 'Lymph-3': 'lymphatic',
+    'Lymph-4': 'lymphatic', 'Lymph-5': 'lymphatic', 'Lymph-6': 'lymphatic',
+    'Lymph-7': 'lymphatic', 'Lymph-8': 'lymphatic',
+
+    // ===== ORGANS (Misc) =====
     'Eye': 'organs', 'Cornea': 'organs', 'Iris': 'organs',
-    'Gland': 'organs', 'Mucosa': 'organs',
+    'Gland': 'organs', 'Mucosa': 'organs', 'Organ': 'organs',
+    'Organ-1': 'organs', 'Organ-2': 'organs', 'Organ-3': 'organs', 'Organ-4': 'organs',
+    'Organ-5': 'organs', 'Organ-6': 'organs', 'Organ-7': 'organs', 'Organ-8': 'organs',
 }
 
 /**
@@ -165,14 +184,37 @@ const MATERIAL_COLORS = {
     'Bursa': null,      // keep original blue with alpha
     'Fat': null,      // keep original brown
 
+    // === RESPIRATORY ===
+    'Lung-1': '#e6a8aa', 'Lung-2': '#e3a2a4', 'Lung-3': '#df9b9e',
+    'Lung-4': '#dc9598', 'Lung-5': '#d88e92', 'Lung-6': '#d5888c',
+    'Lung-7': '#d28286', 'Lung-8': '#ce7b80', 'Lung-9': '#cb757a',
+    'Lung-base': '#d5888c', 'Diaphragm': '#c44848',
+    'Bronchi': '#d8e4e8', 'Bronchi-1': '#d8e4e8', 'Bronchi-2': '#d8e4e8',
+    'Bronchi-3': '#d8e4e8', 'Bronchi-4': '#d8e4e8', 'Bronchi-5': '#d8e4e8',
+    'Bronchi-6': '#d8e4e8', 'Bronchi-7': '#d8e4e8', 'Bronchi-8': '#d8e4e8',
+
+    // === DIGESTIVE ===
+    'Intestine': '#dca398',
+    'Mucosa of stomach': '#d88a90',
+    'Gallbladder': '#7caf68', // Greenish
+
+    // === LYMPHATIC ===
+    'Lymph-1': '#88c890', 'Lymph-2': '#88c890', 'Lymph-3': '#88c890',
+    'Lymph-4': '#88c890', 'Lymph-5': '#88c890', 'Lymph-6': '#88c890',
+    'Lymph-7': '#88c890', 'Lymph-8': '#88c890',
+
     // === ORGANS ===
     'Eye': null, // keep original
     'Cornea': null, 'Iris': null,
-    'Gland': '#c8a0c0', // lavender
+    'Gland': '#d4b4cc', // lavender/pinkish
     'Mucosa': '#e0a0a0', // pink
+    'Organ': '#c87070', // generic liver/spleen colors
+    'Organ-1': '#c87070', 'Organ-2': '#b06060', 'Organ-3': '#a05050',
+    'Organ-4': '#d08080', 'Organ-5': '#e09090', 'Organ-6': '#c87070',
+    'Organ-7': '#b06060', 'Organ-8': null,
 
     // === UI / MISC (hide these) ===
-    'Text': '#000000',
+    'Text': '#ffffff',
     'Movement': null,
     'Lines': null,
     'Planes': null,
@@ -317,7 +359,7 @@ function findHeartNodes(scene) {
 function findRespiratoryNodes(scene) {
     const results = []
     const respiratoryPatterns = [
-        'lung', 'diaphragm', 'pleura', 'pectoralis', 'intercostal', 'rib'
+        'lung', 'diaphragm', 'pleura', 'pectoralis', 'intercostal', 'rib', 'bronchi'
     ]
 
     scene.traverse((node) => {
