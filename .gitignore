@@ -1,0 +1,55 @@
+# ============================================
+# Fabbrica Agentica — Ignora TUTTO il framework
+# ============================================
+
+# Virtual Environment
+.venv/
+
+# Node
+node_modules/
+package.json
+package-lock.json
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Agent Framework
+.agent/
+execution/
+gemini.md
+mcp_config.json
+
+# Setup scripts
+setup.sh
+force-mcp-setup.sh
+
+# Docker (fabbrica)
+Dockerfile
+
+# Requirements (fabbrica)
+requirements.txt
+
+# Directives (fabbrica)
+directives/
+
+# Fabbrica source files
+src/main.py
+src/__init__.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Env
+.env
+.env.*
+
+# Cache
+.cache/
