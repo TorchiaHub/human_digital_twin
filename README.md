@@ -54,9 +54,10 @@ Il progetto è stato concepito seguendo il **Metodo Sacchi** — un framework di
 | **Execution** | Developer | Implementazione con TDD rigoroso |
 
 L'idea si è cristallizzata in milestone progressive:
-1. **Milestone 1-2** *(corrente)*: Rendering 3D + UI interattiva + animazione battito cardiaco
-2. **Milestone 3-4** *(futura)*: Integrazione dati biometrici reali (wearable, API salute)
-3. **Milestone 5+** *(visione)*: Simulazioni predittive, digital twin personalizzato
+1. **Milestone 1-2** *(completata)*: Rendering 3D + UI interattiva + animazione battito cardiaco + colori anatomici
+2. **Milestone 3** *(in corso)*: Interattività avanzata — click info, hover highlight, respirazione, ricerca anatomica
+3. **Milestone 4-5** *(futura)*: Integrazione dati biometrici reali (wearable, API salute)
+4. **Milestone 6+** *(visione)*: Simulazioni predittive, digital twin personalizzato
 
 ---
 
@@ -100,9 +101,10 @@ Questo progetto dimostra che lo sviluppo software AI-assisted non è più un esp
 
 | Feature | Descrizione |
 |---------|-------------|
-| 🧍 **Modello 3D completo** | Corpo umano caricato da file GLB con tutte le gerarchie anatomiche |
+| 🧍 **Modello 3D completo** | Corpo umano con 3.632 nodi e 131 materiali, classificati per sistema anatomico |
+| 🎨 **Colori Anatomici** | Palette realistica: ossa avorio, muscoli rossi, arterie rosse, vene blu, nervi gialli |
 | 🔄 **Navigazione 3D** | Rotazione, zoom e pan con OrbitControls e damping |
-| 🎛️ **Toggle Sistemi Anatomici** | 6 interruttori per mostrare/nascondere: Pelle, Scheletro, Muscoli, Cardiovascolare, Nervoso, Organi |
+| 🎛️ **Toggle Sistemi Anatomici** | 7 interruttori: Pelle, Scheletro, Muscoli, Cardiovascolare, Nervoso, Connettivo, Organi |
 | 💓 **Battito Cardiaco Simulato** | Animazione sistole/diastole realistiche calcolata in tempo reale |
 | 📊 **Pannello Dati Vitali** | Display BPM con indicatore cardiaco animato |
 | 🌙 **UI Glassmorphism** | Sidebar semitrasparente con backdrop blur e design premium |
@@ -231,18 +233,19 @@ human_digital_twin/
 
 ## ⚙️ Come Funziona
 
-### Classificazione dei Nodi Anatomici
+### Classificazione per Materiale
 
-`HumanModel.jsx` attraversa il grafo della scena 3D usando `scene.traverse()` e classifica ogni nodo in un sistema anatomico basandosi sul nome:
+`HumanModel.jsx` classifica i 3.632 nodi del modello GLB in 7 sistemi anatomici utilizzando il **nome del materiale** di ciascuna mesh (non il nome del nodo):
 
 ```javascript
-const SYSTEM_PATTERNS = {
-  skeletal:       ['bone', 'skel', 'skull', 'spine', 'rib', ...],
-  muscular:       ['muscle', 'bicep', 'tricep', 'deltoid', ...],
-  cardiovascular: ['heart', 'vein', 'artery', 'aorta', ...],
-  nervous:        ['nerve', 'brain', 'cerebr', 'neuron', ...],
-  organs:         ['liver', 'kidney', 'lung', 'stomach', ...],
-  integumentary:  ['skin', 'dermis', 'body', 'surface', ...],
+const MATERIAL_TO_SYSTEM = {
+  'Bone': 'skeletal',     'Bone-1': 'skeletal', ...,
+  'Artery': 'cardiovascular', 'Vein': 'cardiovascular',
+  'Nerve': 'nervous',     'Brain': 'nervous', ...,
+  'Flexion': 'muscular',  'Extension': 'muscular', ...,
+  'Skin-1': 'integumentary', ...,
+  'Ligament': 'connective', 'Cartilage': 'connective', ...,
+  'Eye': 'organs', ...,
 }
 ```
 
@@ -261,11 +264,21 @@ Il battito cardiaco è simulato con `useFrame()` di React Three Fiber, che esegu
 ## 🗺️ Roadmap
 
 - [x] **M1** — Setup progetto (React + Vite + Tailwind + R3F)
-- [x] **M2** — Rendering 3D, toggle anatomici, battito cardiaco
-- [ ] **M3** — Click su organi per info dettagliate
-- [ ] **M4** — Integrazione dati biometrici (wearable API)
-- [ ] **M5** — Simulazioni condizioni mediche
-- [ ] **M6** — Digital Twin personalizzato con dati utente
+- [x] **M2** — Rendering 3D, toggle anatomici, battito cardiaco, colori anatomici
+- [ ] **M3** — Interattività avanzata *(in corso)*
+  - [ ] Click su parte anatomica → pannello informativo
+  - [ ] Hover highlight con glow/outline
+  - [ ] Animazione respirazione (espansione torace)
+  - [ ] Dashboard vitali espansa (SpO₂, pressione, temperatura)
+  - [ ] Barra ricerca anatomica con zoom automatico
+- [ ] **M4** — Animazioni avanzate
+  - [ ] Flusso sanguigno con particelle animate (shader)
+  - [ ] Propagazione impulsi nervosi
+  - [ ] Contrazione muscolare interattiva
+- [ ] **M5** — Integrazione dati biometrici (wearable API, Apple Health, Google Fit)
+- [ ] **M6** — Mappa del dolore e annotazioni utente
+- [ ] **M7** — Simulazione condizioni mediche
+- [ ] **M8** — Digital Twin personalizzato con dati utente reali
 
 ---
 
