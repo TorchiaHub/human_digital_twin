@@ -392,6 +392,7 @@ export default function HumanModel() {
     const heartRate = useBodyStore((s) => s.heartRate)
     const respirationRate = useBodyStore((s) => s.respirationRate)
     const setModelLoaded = useBodyStore((s) => s.setModelLoaded)
+    const setSearchableParts = useBodyStore((s) => s.setSearchableParts)
 
     // Apply anatomical colors ONCE on load
     useEffect(() => {
@@ -408,18 +409,46 @@ export default function HumanModel() {
         return classifyByMaterial(scene)
     }, [scene])
 
-    // Find animated nodes + log stats
+    // Find animated nodes, log stats, and build search index
     useEffect(() => {
         heartMeshes.current = findHeartNodes(scene)
         respiratoryMeshes.current = findRespiratoryNodes(scene)
         setModelLoaded(true)
 
         const stats = {}
-        nodeClassification.forEach((system) => {
+        const searchableArray = []
+
+        nodeClassification.forEach((system, node) => {
             stats[system] = (stats[system] || 0) + 1
+            if (node.name) {
+                // Formatting mesh name for search
+                let cleanName = node.name.replace(/_([a-zA-Z])/g, ' $1').replace(/^[a-z]/, (m) => m.toUpperCase())
+                cleanName = cleanName.replace(/\.l$/, ' (Sinistro)').replace(/\.r$/, ' (Destro)')
+
+                // Computing bounding box to know exact center and size for camera zoom
+                const box = new THREE.Box3().setFromObject(node)
+                const center = new THREE.Vector3()
+                box.getCenter(center)
+                const size = new THREE.Vector3()
+                box.getSize(size)
+
+                searchableArray.push({
+                    id: node.uuid,
+                    name: cleanName,
+                    system: system,
+                    cameraTarget: center.toArray(), // Center point of the organ
+                    cameraDistance: Math.max(size.length(), 0.5) // Distance to pull camera back
+                })
+            }
         })
         console.log('🧬 Model classification:', stats)
-    }, [scene, setModelLoaded, nodeClassification])
+        console.log(`🔍 Extracted ${searchableArray.length} searchable parts`)
+
+        // Sort alphabetically and store in Zustand
+        searchableArray.sort((a, b) => a.name.localeCompare(b.name))
+        setSearchableParts(searchableArray)
+
+    }, [scene, setModelLoaded, nodeClassification, setSearchableParts])
 
     // Apply visibility toggles
     useEffect(() => {

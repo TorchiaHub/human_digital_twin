@@ -1,5 +1,6 @@
 import SystemToggle from './SystemToggle'
 import VitalSigns from './VitalSigns'
+import SearchBar from './SearchBar'
 
 const SYSTEM_KEYS = [
     'integumentary',
@@ -22,6 +23,9 @@ export default function Sidebar() {
                 <h1>Human Digital Twin</h1>
                 <p>Esplorazione Anatomica Interattiva</p>
             </div>
+
+            {/* Anatomical Search */}
+            <SearchBar />
 
             {/* Anatomical Systems */}
             <div className="sidebar-section">

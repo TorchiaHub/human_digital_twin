@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
 import HumanModel from './HumanModel'
+import CameraController from './CameraController'
 
 export default function Canvas3D() {
     return (
@@ -60,6 +61,7 @@ export default function Canvas3D() {
 
                 {/* Orbit Controls */}
                 <OrbitControls
+                    makeDefault
                     enablePan={true}
                     enableZoom={true}
                     enableRotate={true}
@@ -70,6 +72,9 @@ export default function Canvas3D() {
                     enableDamping={true}
                     dampingFactor={0.05}
                 />
+
+                {/* Camera Controller for Auto-Zoom */}
+                <CameraController />
             </Canvas>
         </div>
     )

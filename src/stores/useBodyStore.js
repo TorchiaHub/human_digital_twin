@@ -34,6 +34,13 @@ const useBodyStore = create((set) => ({
     selectedPart: null,
     setSelectedPart: (part) => set({ selectedPart: part }),
 
+    // Search and Auto-Zoom State
+    searchableParts: [], // Array of { id, name, system, position }
+    setSearchableParts: (parts) => set({ searchableParts: parts }),
+
+    focusedPartId: null, // ID of the mesh to zoom the camera to
+    setFocusedPartId: (id) => set({ focusedPartId: id }),
+
     // Vital signs
     heartRate: 72,
     setHeartRate: (bpm) => set({ heartRate: bpm }),
