@@ -3,9 +3,34 @@ import useBodyStore from '../stores/useBodyStore'
 
 export default function VitalSigns() {
     const heartRate = useBodyStore((s) => s.heartRate)
+    const setHeartRate = useBodyStore((s) => s.setHeartRate)
     const respirationRate = useBodyStore((s) => s.respirationRate)
+    const setRespirationRate = useBodyStore((s) => s.setRespirationRate)
     const spO2 = useBodyStore((s) => s.spO2)
+    const setSpO2 = useBodyStore((s) => s.setSpO2)
     const bp = useBodyStore((s) => s.bloodPressure)
+    const setBloodPressure = useBodyStore((s) => s.setBloodPressure)
+
+    // Algorithmic physiological response to heart rate
+    const handleHeartRateChange = (newBpm) => {
+        setHeartRate(newBpm)
+
+        // Baseline stress intensity
+        const intensity = Math.max(0, newBpm - 70)
+
+        // Respiration increases with BPM
+        const newResp = Math.round(16 + (intensity * 0.25))
+        setRespirationRate(newResp)
+
+        // SpO2 drops slightly if BPM is very high (simulating extreme stress)
+        const newSpO2 = newBpm > 120 ? Math.max(90, 98 - Math.floor((newBpm - 120) * 0.15)) : 98
+        setSpO2(newSpO2)
+
+        // Blood pressure increases with BPM
+        const newSys = Math.round(120 + (intensity * 0.4))
+        const newDia = Math.round(80 + (intensity * 0.15))
+        setBloodPressure(newSys, newDia)
+    }
 
     return (
         <div className="mt-8">
@@ -71,6 +96,28 @@ export default function VitalSigns() {
                     <div className="flex items-baseline gap-1 mt-1">
                         <span className="text-2xl font-bold text-white tracking-tight">{bp.sys}</span>
                         <span className="text-lg font-medium text-slate-500">/{bp.dia}</span>
+                    </div>
+                </div>
+
+                {/* Simulated Stress Control */}
+                <div className="col-span-2 bg-slate-900/40 border border-white/5 rounded-xl p-4 mt-2 mb-2">
+                    <div className="flex justify-between items-center text-xs text-slate-400 mb-3">
+                        <span className="uppercase font-semibold tracking-wider flex items-center gap-1">
+                            <Activity size={12} /> Controllo Sforzo
+                        </span>
+                        <span>{heartRate > 100 ? 'Sotto Sforzo' : 'Riposo'}</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="60"
+                        max="180"
+                        value={heartRate}
+                        onChange={(e) => handleHeartRateChange(Number(e.target.value))}
+                        className="w-full accent-pink-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer hover:accent-pink-400 transition-colors"
+                    />
+                    <div className="flex justify-between text-[10px] text-slate-500 mt-2">
+                        <span>60 BPM</span>
+                        <span>180 BPM</span>
                     </div>
                 </div>
 

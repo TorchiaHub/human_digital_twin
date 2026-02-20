@@ -393,6 +393,7 @@ export default function HumanModel() {
     const respirationRate = useBodyStore((s) => s.respirationRate)
     const setModelLoaded = useBodyStore((s) => s.setModelLoaded)
     const setSearchableParts = useBodyStore((s) => s.setSearchableParts)
+    const hoveredPart = useBodyStore((s) => s.hoveredPart)
 
     // Apply anatomical colors ONCE on load
     useEffect(() => {
@@ -458,7 +459,29 @@ export default function HumanModel() {
                 node.visible = systemData.visible
             }
         })
-    }, [systems, nodeClassification])
+    }, [nodeClassification, systems])
+
+    // Apply hover emissive highlight
+    useEffect(() => {
+        // We track the currently modified materials to avoid iterating all thousands of nodes to reset
+        const modifiedMaterials = new Set()
+
+        nodeClassification.forEach((system, node) => {
+            const mat = node.material
+            if (!mat) return
+
+            if (hoveredPart && hoveredPart.id === node.uuid) {
+                // Highlight cyan
+                mat.emissive.setHex(0x00e5ff)
+                mat.emissiveIntensity = 0.4
+                modifiedMaterials.add(mat)
+            } else if (!modifiedMaterials.has(mat)) {
+                // Reset to un-hovered state
+                mat.emissive.setHex(0x000000)
+                mat.emissiveIntensity = 0
+            }
+        })
+    }, [hoveredPart, nodeClassification])
 
     // Heartbeat & Breathing animations
     useFrame((state) => {
@@ -482,6 +505,24 @@ export default function HumanModel() {
             heartMeshes.current.forEach(({ obj, baseScale }) => {
                 const s = 1 + pulse
                 obj.scale.set(baseScale.x * s, baseScale.y * s, baseScale.z * s)
+
+                // Visual Stress Feedback: Red glow if heart rate is high
+                if (obj.material && obj.material.emissive) {
+                    if (heartRate > 100) {
+                        // Color lerps towards red based on how high over 100 it is
+                        const intensity = Math.min((heartRate - 100) / 100, 1) // 0 to 1
+                        // Pulse the emissive intensity with the heartbeat
+                        const glowPulse = Math.max(pulse * 10, 0) * intensity
+                        obj.material.emissive.setHex(0xff0000)
+                        obj.material.emissiveIntensity = glowPulse
+                    } else if (
+                        !hoveredPart || hoveredPart.id !== obj.uuid
+                    ) {
+                        // Reset if not hovered
+                        obj.material.emissive.setHex(0x000000)
+                        obj.material.emissiveIntensity = 0
+                    }
+                }
             })
         }
 
@@ -510,15 +551,27 @@ export default function HumanModel() {
                     // Chest/lungs expand outward
                     obj.scale.set(baseScale.x * expandX, baseScale.y, baseScale.z * expandZ)
                 }
+
+                // Visual Stress Feedback for Lungs
+                if (obj.material && obj.material.emissive && !obj.name.toLowerCase().includes('diaphragm')) {
+                    if (heartRate > 100) {
+                        const intensity = Math.min((heartRate - 100) / 100, 0.4) // Subtle red glow for lungs
+                        const glowPulse = breathCycle * intensity
+                        obj.material.emissive.setHex(0xff3333)
+                        obj.material.emissiveIntensity = glowPulse
+                    } else if (
+                        !hoveredPart || hoveredPart.id !== obj.uuid
+                    ) {
+                        obj.material.emissive.setHex(0x000000)
+                        obj.material.emissiveIntensity = 0
+                    }
+                }
             })
         }
     })
 
     const setHoveredPart = useBodyStore((s) => s.setHoveredPart)
     const setSelectedPart = useBodyStore((s) => s.setSelectedPart)
-    const hoveredPart = useBodyStore((s) => s.hoveredPart)
-    const hoveredMaterialRef = useRef(null)
-    const origEmissiveRef = useRef(null)
 
     // Handle hover effects
     const handlePointerOver = (e) => {
@@ -541,34 +594,10 @@ export default function HumanModel() {
             system: system,
             id: mesh.uuid
         })
-
-        // Add glow effect by modifying emissive color temporarily
-        const mat = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
-        if (mat) {
-            // Restore previous hovered material if any
-            if (hoveredMaterialRef.current && hoveredMaterialRef.current !== mat) {
-                hoveredMaterialRef.current.emissive.setHex(origEmissiveRef.current)
-            }
-
-            // Save original and set new glow
-            if (hoveredMaterialRef.current !== mat) {
-                hoveredMaterialRef.current = mat
-                origEmissiveRef.current = mat.emissive ? mat.emissive.getHex() : 0x000000
-                mat.emissive.setHex(0x333333) // Subtle white glow
-                mat.needsUpdate = true
-            }
-        }
     }
 
     const handlePointerOut = (e) => {
         setHoveredPart(null)
-
-        // Reset glow
-        if (hoveredMaterialRef.current) {
-            hoveredMaterialRef.current.emissive.setHex(origEmissiveRef.current)
-            hoveredMaterialRef.current.needsUpdate = true
-            hoveredMaterialRef.current = null
-        }
     }
 
     const handleClick = (e) => {
