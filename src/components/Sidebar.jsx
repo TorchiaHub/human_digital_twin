@@ -7,6 +7,7 @@ const SYSTEM_KEYS = [
     'muscular',
     'cardiovascular',
     'nervous',
+    'connective',
     'organs',
 ]
 
